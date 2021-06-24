@@ -29,7 +29,7 @@ const addNoteHandler = (request, h) => {
       },
     });
 
-    response.code(200);
+    response.code(201);
     return response;
   }
 
