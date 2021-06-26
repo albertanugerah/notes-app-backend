@@ -1,12 +1,17 @@
 class NotesHandler {
   constructor(service) {
     this._service = service;
+    this.postNoteHandler = this.postNoteHandler.bind(this);
+    this.getNotesHandler = this.getNotesHandler.bind(this);
+    this.getNoteByIdHandler = this.getNoteByIdHandler.bind(this);
+    this.putNoteByIdHandler = this.putNoteByIdHandler.bind(this);
+    this.deleteNoteByIdHandler = this.deleteNoteByIdHandler.bind(this);
   }
 
-  postNoteHanlder(request, h) {
+  postNoteHandler(request, h) {
     try {
       const { title = 'untitled', tags, body } = request.payload;
-      const noteId = this._service.addNotes({ title, tags, body });
+      const noteId = this._service.addNote({ title, tags, body });
 
       const response = h.response({
         status: 'success',
@@ -27,28 +32,36 @@ class NotesHandler {
     }
   }
 
-  getNotesHandler(h) {
-    try {
-      const notes = this._service.getNotes();
-      const response = h.response({
-        status: 'success',
-        data: {
-          notes,
-        },
-      });
-      response.code(200);
-      return response;
-    } catch (error) {
-      const response = h.response({
-        status: 'fial',
-        message: error.message,
-      });
-      response.code(400);
-      return response;
-    }
+  getNotesHandler() {
+    const notes = this._service.getNotes();
+    return {
+      status: 'success',
+      data: {
+        notes,
+      },
+    };
+
+    // try {
+    //   const notes = this._service.getNotes();
+    //   const response = h.response({
+    //     status: 'success',
+    //     data: {
+    //       notes,
+    //     },
+    //   });
+    //   response.code(200);
+    //   return response;
+    // } catch (error) {
+    //   const response = h.response({
+    //     status: 'fail',
+    //     message: error.message,
+    //   });
+    //   response.code(400);
+    //   return response;
+    // }
   }
 
-  getNoteByIdHanlder(request, h) {
+  getNoteByIdHandler(request, h) {
     try {
       const { id } = request.params;
       const note = this._service.getNoteById(id);
@@ -76,7 +89,7 @@ class NotesHandler {
       this._service.editNoteById(id, request.payload);
       const response = h.response({
         status: 'success',
-        message: 'Catatan berhasil diperbarui',
+        message: 'Catatan berhasil diperbaharui',
       });
       response.code(200);
       return response;
@@ -90,20 +103,18 @@ class NotesHandler {
     }
   }
 
-  detleteNoteByIdHandler(request, h) {
+  deleteNoteByIdHandler(request, h) {
     try {
       const { id } = request.params;
-      this._service.detleteNoteById(id);
-      const response = h.response({
+      this._service.deleteNoteById(id);
+      return {
         status: 'success',
         message: 'Catatan berhasil dihapus',
-      });
-      response.code(200);
-      return response;
+      };
     } catch (error) {
       const response = h.response({
         status: 'fail',
-        message: error.message,
+        message: 'Catatan gagal dihapus. Id tidak ditemukan',
       });
       response.code(404);
       return response;
