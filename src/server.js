@@ -1,6 +1,10 @@
 require('dotenv').config();
 const Hapi = require('@hapi/hapi');
 const Jwt = require('@hapi/jwt');
+// exceptions
+const NotFoundError = require('./exceptions/NotFoundError');
+const AuthorizationError = require('./exceptions/AuthorizationError');
+
 // notes
 const notes = require('./api/notes');
 const ClientError = require('./exceptions/ClientError');
@@ -14,14 +18,21 @@ const UsersValidator = require('./validator/users');
 
 // authentications
 const authentications = require('./api/authentications');
+const AuthenticationsService = require('./services/postgres/AuthenticationsService');
 const TokenManager = require('./tokenize/TokenManager');
 const AuthenticationsValidator = require('./validator/authentications');
-const AuthenticationsService = require('./services/postgres/AuthenticationsService');
+
+// collaborations
+const collaborations = require('./api/collaborations');
+const CollaborationsService = require('./services/postgres/CollaborationsService');
+const CollaborationsValidator = require('./validator/collaborations');
 
 const init = async () => {
-  const notesService = new NotesService();
+  const collaborationsService = new CollaborationsService();
+  const notesService = new NotesService(collaborationsService);
   const usersService = new UsersService();
   const authenticationsService = new AuthenticationsService();
+
   const server = Hapi.server({
     port: process.env.PORT,
     host: process.env.HOST,
@@ -79,6 +90,14 @@ const init = async () => {
         validator: AuthenticationsValidator,
       },
     },
+    {
+      plugin: collaborations,
+      options: {
+        collaborationsService,
+        notesService,
+        validator: CollaborationsValidator,
+      },
+    },
   ]);
   server.ext('onPreResponse', (request, h) => {
     // mendapatkan konteks respose dari request
@@ -86,6 +105,22 @@ const init = async () => {
 
     if (response instanceof ClientError) {
       // membuat response baru dari response toolkit sesuai kebutuhan error handling
+      const newResponse = h.response({
+        status: 'fail',
+        message: response.message,
+      });
+      newResponse.code(response.statusCode);
+      return newResponse;
+    }
+    if (response instanceof NotFoundError) {
+      const newResponse = h.response({
+        status: 'fail',
+        message: response.message,
+      });
+      newResponse.code(response.statusCode);
+      return newResponse;
+    }
+    if (response instanceof AuthorizationError) {
       const newResponse = h.response({
         status: 'fail',
         message: response.message,
