@@ -23,6 +23,7 @@
     "@hapi/inert": "^6.0.3",
     "@hapi/jwt": "^2.0.1",
     "amqplib": "^0.8.0",
+    "aws-sdk": "^2.960.0",
     "bcrypt": "^5.0.1",
     "dotenv": "^10.0.0",
     "eslint-config-prettier": "^8.3.0",
